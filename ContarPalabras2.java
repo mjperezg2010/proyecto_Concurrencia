@@ -1,3 +1,17 @@
+//Clase Post Procesamiento de Dataset Querys Wikimedia
+/*
+
+Proyecto: Contador de Palabras Dos Frecuente con Hadoop/MapReduce
+Clase: Concurrencia de Sistemas Distribuidos 
+
+Integrantes:
+Bryan Manrique Amador Mena
+Martín José Pérez Gálvez
+Richardson Alejandro Laínez Cárcamo
+
+*/
+
+//Importar las clases de hadoop Map/Reduce
 import java.io.IOException;
 import java.util.StringTokenizer;
 import org.apache.hadoop.conf.Configuration;
@@ -9,40 +23,39 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-
+//Inicio de la clase 
 public class ContarPalabras2 {
-
-  public static class TokenizerMapper
-       extends Mapper<Object, Text, Text, IntWritable>{
-
+   //Seccion de separacion de las palabras, MAP
+ //Utilizacion de las librerias Mapper, InWritable,Text
+  public static class TokenizerMapper extends Mapper<Object, Text, Text, IntWritable>{
     private final static IntWritable two = new IntWritable(1);
     private Text word = new Text();
-  
-    public void map(Object key, Text value, Context context
-                    ) throws IOException, InterruptedException {
-                        
+    public void map(Object key, Text value, Context context) throws IOException, InterruptedException {                  
       StringTokenizer itr = new StringTokenizer(value.toString());
-      while (itr.hasMoreTokens()) {
-          String [] palabras=value.toString().split(" ");
-           String []Temp;
-           String Palabra=itr.nextToken();
-            String Concatenadas="";
-            for (String palabraTemp : palabras) {
-                if (!(palabraTemp.equalsIgnoreCase(Palabra))&&Palabra.length()>0&&palabraTemp.length()>0) {
-                  
-                    Concatenadas+=Palabra+" "+palabraTemp+"-";
+         int cont=1;
+             //Tomar las palabras una por una
+        while (itr.hasMoreTokens()) {
+            String[] tokenspalabras = value.toString().split(" "),Temp;
+            String Palabra = itr.nextToken(),acum="";
+            if(tokenspalabras.length>1){
+            for (int i = cont; i < tokenspalabras.length; i++) {
+                if (!(tokenspalabras[i].equalsIgnoreCase(Palabra)) && Palabra.length() > 0 && tokenspalabras[i].length() > 0) {
+                    acum += Palabra + " " + tokenspalabras[i] + "-";
                 }
             }
-           Temp=Concatenadas.split("-");
-          for(int i=0;i<Temp.length;i++){
-              word.set(Temp[i]);
-              context.write(word, two);
-          }
-      }//Fin del while
+            Temp = acum.split("-");
+            for (int i = 0; i < Temp.length; i++) {
+                word.set(Temp[i]);
+                context.write(word, two);
+            }
+            cont=cont+1;
+            }
+        }
     }
   }
-/*SUMA LAS PALABRAS */
-  public static class PalabrasReducir
+
+//Seccion de separacion de las palabras, Reduce  
+  public static class ReduceClase
        extends Reducer<Text,IntWritable,Text,IntWritable> {
     private IntWritable result = new IntWritable();
 
@@ -60,11 +73,11 @@ public class ContarPalabras2 {
 
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
-    Job job = Job.getInstance(conf, "word count");
+    Job job = Job.getInstance(conf, "ontador de Palabras Dos");
     job.setJarByClass(ContarPalabras2.class);
     job.setMapperClass(TokenizerMapper.class);
-    job.setCombinerClass(PalabrasReducir.class);
-    job.setReducerClass(PalabrasReducir.class);
+    job.setCombinerClass(ReduceClase.class);
+    job.setReducerClass(ReduceClase.class);
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(IntWritable.class);
     FileInputFormat.addInputPath(job, new Path(args[0]));
@@ -72,3 +85,4 @@ public class ContarPalabras2 {
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }
 }
+
